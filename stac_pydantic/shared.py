@@ -2,6 +2,8 @@ from datetime import datetime
 from enum import Enum, auto
 from typing import List, Optional, Tuple, Union
 
+import pendulum
+from pendulum.datetime import DateTime
 from pydantic import BaseModel, Extra, Field, validator
 
 from stac_pydantic.extensions.eo import BandObject
@@ -14,6 +16,7 @@ BBox = Union[
 ]
 
 # https://tools.ietf.org/html/rfc3339#section-5.6
+# Unused, but leaving it here since it's used by dependencies
 DATETIME_RFC339 = "%Y-%m-%dT%H:%M:%SZ"
 
 
@@ -101,10 +104,10 @@ class StacCommonMetadata(BaseModel):
 
     title: Optional[str] = Field(None, alias="title")
     description: Optional[str] = Field(None, alias="description")
-    start_datetime: Optional[Union[datetime, str]] = Field(None, alias="start_datetime")
-    end_datetime: Optional[Union[datetime, str]] = Field(None, alias="end_datetime")
-    created: Optional[Union[datetime, str]] = Field(None, alias="created")
-    updated: Optional[Union[datetime, str]] = Field(None, alias="updated")
+    start_datetime: Optional[datetime] = Field(None, alias="start_datetime")
+    end_datetime: Optional[datetime] = Field(None, alias="end_datetime")
+    created: Optional[datetime] = Field(None, alias="created")
+    updated: Optional[datetime] = Field(None, alias="updated")
     platform: Optional[str] = Field(None, alias="platform")
     instruments: Optional[List[str]] = Field(None, alias="instruments")
     constellation: Optional[str] = Field(None, alias="constellation")
@@ -112,33 +115,8 @@ class StacCommonMetadata(BaseModel):
     providers: Optional[List[Provider]] = Field(None, alias="providers")
     gsd: Optional[NumType] = Field(None, alias="gsd")
 
-    @staticmethod
-    def _parse_rfc3339(dt: str):
-        try:
-            return datetime.strptime(dt, DATETIME_RFC339)
-        except Exception as e:
-            raise ValueError(
-                f"Invalid datetime, must match format ({DATETIME_RFC339})."
-            ) from e
-
-    @validator("start_datetime", allow_reuse=True)
-    def validate_start_datetime(cls, v):
-        return cls._parse_rfc3339(v)
-
-    @validator("end_datetime", allow_reuse=True)
-    def validate_start_datetime(cls, v):
-        return cls._parse_rfc3339(v)
-
-    @validator("created", allow_reuse=True)
-    def validate_start_datetime(cls, v):
-        return cls._parse_rfc3339(v)
-
-    @validator("updated", allow_reuse=True)
-    def validate_start_datetime(cls, v):
-        return cls._parse_rfc3339(v)
-
     class Config:
-        json_encoders = {datetime: lambda v: v.strftime(DATETIME_RFC339)}
+        json_encoders = {datetime: lambda dt: pendulum.instance(dt).to_rfc3339_string()}
 
 
 class Asset(StacCommonMetadata):

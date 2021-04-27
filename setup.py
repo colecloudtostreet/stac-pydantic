@@ -12,7 +12,7 @@ setup(
     description="Pydantic data models for the STAC spec",
     long_description=desc,
     long_description_content_type="text/markdown",
-    version="1.3.9",
+    version="1.3.10",
     python_requires=">=3.7",
     classifiers=[
         "Intended Audience :: Developers",
@@ -30,7 +30,7 @@ setup(
     license="MIT",
     packages=find_packages(exclude=["tests"]),
     zip_safe=False,
-    install_requires=["click", "pydantic>=1.6", "geojson-pydantic",],
+    install_requires=["click", "pydantic>=1.6", "geojson-pydantic", "pendulum"],
     tests_require=extras["dev"],
     setup_requires=["pytest-runner"],
     entry_points={"console_scripts": ["stac-pydantic=stac_pydantic.scripts.cli:app"]},
