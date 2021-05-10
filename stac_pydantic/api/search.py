@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 
-import pendulum
 from geojson_pydantic.geometries import (
     LineString,
     MultiLineString,
@@ -12,6 +11,7 @@ from geojson_pydantic.geometries import (
     _GeometryBase,
 )
 from pydantic import BaseModel, Field, validator
+from pydantic.datetime_parse import parse_datetime
 
 from stac_pydantic.api.extensions.fields import FieldsExtension
 from stac_pydantic.api.extensions.query import Operator
@@ -43,16 +43,16 @@ class Search(BaseModel):
             return None
         if values[0] == "..":
             return None
-        return pendulum.parse(values[0])
+        return parse_datetime(values[0])
 
     @property
     def end_date(self) -> Optional[datetime]:
         values = self.datetime.split("/")
         if len(values) == 1:
-            return pendulum.parse(values[0])
+            return parse_datetime(values[0])
         if values[1] == "..":
             return None
-        return pendulum.parse(values[1])
+        return parse_datetime(values[1])
 
     @validator("intersects")
     def validate_spatial(cls, v, values):
@@ -74,11 +74,11 @@ class Search(BaseModel):
                 dates.append(value)
                 continue
 
-            pendulum.parse(value)
+            parse_datetime(value)
             dates.append(value)
 
         if ".." not in dates:
-            if pendulum.parse(dates[0]) > pendulum.parse(dates[1]):
+            if parse_datetime(dates[0]) > parse_datetime(dates[1]):
                 raise ValueError(
                     "Invalid datetime range, must match format (begin_date, end_date)"
                 )

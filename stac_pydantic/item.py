@@ -2,15 +2,15 @@ from datetime import datetime as dt
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple, Type, Union
 
-import pendulum
 from geojson_pydantic.features import Feature, FeatureCollection
 from pydantic import BaseModel, Field, create_model, validator
+from pydantic.datetime_parse import parse_datetime
 from pydantic.fields import FieldInfo
 
 from stac_pydantic.api.extensions.context import ContextExtension
 from stac_pydantic.extensions import Extensions
 from stac_pydantic.links import Links
-from stac_pydantic.shared import Asset, BBox, StacCommonMetadata
+from stac_pydantic.shared import DATETIME_RFC339, Asset, BBox, StacCommonMetadata
 from stac_pydantic.utils import decompose_model
 from stac_pydantic.version import STAC_VERSION
 
@@ -31,13 +31,13 @@ class ItemProperties(StacCommonMetadata):
                 )
 
         if isinstance(v, str):
-            return pendulum.parse(v)
+            return parse_datetime(v)
 
         return v
 
     class Config:
         extra = "allow"
-        json_encoders = {dt: lambda v: pendulum.instance(v).to_rfc3339_string()}
+        json_encoders = {dt: lambda v: v.strftime(DATETIME_RFC339)}
 
 
 class Item(Feature):

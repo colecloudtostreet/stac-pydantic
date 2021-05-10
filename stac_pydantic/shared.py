@@ -2,9 +2,7 @@ from datetime import datetime
 from enum import Enum, auto
 from typing import List, Optional, Tuple, Union
 
-import pendulum
-from pendulum.datetime import DateTime
-from pydantic import BaseModel, Extra, Field, validator
+from pydantic import BaseModel, Extra, Field
 
 from stac_pydantic.extensions.eo import BandObject
 from stac_pydantic.utils import AutoValueEnum
@@ -116,7 +114,7 @@ class StacCommonMetadata(BaseModel):
     gsd: Optional[NumType] = Field(None, alias="gsd")
 
     class Config:
-        json_encoders = {datetime: lambda dt: pendulum.instance(dt).to_rfc3339_string()}
+        json_encoders = {datetime: lambda v: v.strftime(DATETIME_RFC339)}
 
 
 class Asset(StacCommonMetadata):

@@ -1,8 +1,7 @@
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 
-import pendulum
 import pytest
 from pydantic import BaseModel, Field, ValidationError
 from shapely.geometry import shape
@@ -15,6 +14,7 @@ from stac_pydantic.extensions import Extensions
 from stac_pydantic.extensions.single_file_stac import SingleFileStac
 from stac_pydantic.item import item_model_factory, validate_item
 from stac_pydantic.links import Link, Links, PaginationLink
+from stac_pydantic.shared import DATETIME_RFC339
 from stac_pydantic.version import STAC_VERSION
 
 from .conftest import dict_match, request
@@ -407,8 +407,8 @@ def test_invalid_spatial_search():
 
 def test_temporal_search_single_tailed():
     # Test single tailed
-    utcnow = pendulum.now(tz="UTC")
-    utcnow_str = utcnow.to_rfc3339_string()
+    utcnow = datetime.utcnow().replace(microsecond=0)
+    utcnow_str = utcnow.strftime(DATETIME_RFC339)
     search = Search(collections=["collection1"], datetime=utcnow_str)
     assert search.start_date == None
     assert search.end_date == utcnow
@@ -416,8 +416,8 @@ def test_temporal_search_single_tailed():
 
 def test_temporal_search_two_tailed():
     # Test two tailed
-    utcnow = pendulum.now(tz="UTC")
-    utcnow_str = utcnow.to_rfc3339_string()
+    utcnow = datetime.utcnow().replace(microsecond=0)
+    utcnow_str = utcnow.strftime(DATETIME_RFC339)
     search = Search(collections=["collection1"], datetime=f"{utcnow_str}/{utcnow_str}")
     assert search.start_date == search.end_date == utcnow
 
@@ -433,17 +433,19 @@ def test_temporal_search_open():
 
 
 def test_invalid_temporal_search():
-    # Not RFC3339
+    # Not RFC339
+    utcnow = datetime.utcnow().strftime("%Y-%m-%d")
     with pytest.raises(ValidationError):
-        search = Search(collections=["collection1"], datetime="aljskdfljsd")
+        search = Search(collections=["collection1"], datetime=utcnow)
 
     # End date is before start date
-    start = pendulum.now()
-    end = start.add(seconds=2)
+    start = datetime.utcnow()
+    time.sleep(2)
+    end = datetime.utcnow()
     with pytest.raises(ValidationError):
         search = Search(
             collections=["collection1"],
-            datetime=f"{end.to_rfc3339_string()}/{start.to_rfc3339_string()}",
+            datetime=f"{end.strftime(DATETIME_RFC339)}/{start.strftime(DATETIME_RFC339)}",
         )
 
 
@@ -645,9 +647,6 @@ def test_validate_item_reraise_exception():
 
     with pytest.raises(ValidationError):
         validate_item(test_item, reraise_exception=True)
-
-    test_item["properties"]["datetime"] = "2019-09-07T15:50:00.1234-04:00"
-    validate_item(test_item, reraise_exception=True)
 
 
 def test_multi_inheritance():
